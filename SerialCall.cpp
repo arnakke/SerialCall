@@ -69,8 +69,8 @@ void SerialCall::process_call() {
     serial.flush();
     #endif
     
-    // Get the args    
-    for (uint8_t i = 0; i < args_szs[cmd_id]; i++) {
+    // Get the args and the checksum
+    for (uint8_t i = 0; i < (args_szs[cmd_id] + 1); i++) {
       // Return if the args are not received before timeout
       int temp;
       while ((temp = serial.read()) < 0) {
@@ -83,7 +83,7 @@ void SerialCall::process_call() {
       #endif
     }
     
-    // Set argument index to zero
+    // Set argument index last element
     args_i = args_szs[cmd_id]-1;
     
     #ifdef debug
@@ -91,8 +91,15 @@ void SerialCall::process_call() {
     serial.print("faddr "); serial.println((uint16_t)org_funcs[cmd_id]);
     serial.flush();
     #endif
-    // Execute the handler
-    handlers[cmd_id](this, org_funcs[cmd_id]);
+    
+    // Validate checksum on cmd id + args received
+    uint8_t checksum_received = args_buf[args_szs[cmd_id]];
+    cmd_id_chk = cmd_id;
+    
+    if (checksum_received == crc8(&cmd_id_chk, args_szs[cmd_id]+1)) {
+      // Execute the handler
+      handlers[cmd_id](this, org_funcs[cmd_id]);
+    }
   }
 }
 

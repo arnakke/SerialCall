@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "include/type_info.h"
 #include "include/handler_templates.h"
+#include "include/crc8.h"
 
 //#define debug
 
@@ -12,7 +13,7 @@
 #define MAX_COMMANDS 30
 
 // The size of the args_buf for storing arguments from the remote caller
-#define MAX_ARGS_SZ 8
+#define MAX_ARGS_SZ 17
 
 // The type for storing the return data from the from callback functions.
 // A larger type means that callback functions can have larger return types,
@@ -25,7 +26,7 @@ typedef uint32_t RetData;
 /**
  * Class to create remote procedure call functionality.
  * Each instance can have a number of callback functions attached.
- * Each class is connected to a Stream instance that works as an
+ * Each instance is tied to a Stream instance that works as an
  * abstraction layer between the SerialCall instance and communication
  * hardware, such as a UART.
  */
@@ -54,6 +55,9 @@ class SerialCall {
     CmdId cmd_count;
     int cmd_id;
     unsigned int timeout;
+    // This is used for checksum calculation and must be placed just
+    // above args_buf
+    uint8_t cmd_id_chk;
     uint8_t args_buf[MAX_ARGS_SZ];
     uint8_t args_i;
     uint8_t dev_id;

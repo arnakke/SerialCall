@@ -19,6 +19,7 @@ import time
 import struct
 import re
 from parse_constants import *
+from crc8 import *
 
 format_code_to_types = {
     'B': ["unsigned char", "uint8_t", "byte", "boolean"],
@@ -164,15 +165,22 @@ class Arduino(object):
     
     def call_callback(self, *args):
         cb = self.functions[self.active_cb]
-        self.ser.write(chr(cb.id))
-        #~ print 'writing ', cb.id
+        
+        # Start the package with the cmd id
+        package = chr(cb.id)
+        
+        # Add each of the callback args
         for i in range(len(cb.args)):
             form = '<' + cb.args[i]
-            data = struct.pack(form, args[i])
-            #~ for char in data:
-                #~ print 'writing ', ord(char)
-            self.ser.write(data)
+            package += struct.pack(form, args[i])
         
+        # Append the CRC-8 checksum
+        package += chr( crc8(package) )
+        
+        # Send the package
+        self.ser.write(package)
+        
+        # Get the return data (if relevant)
         if cb.ret:
             form = '<' + cb.ret
             size = format_code_to_bytes[cb.ret]
