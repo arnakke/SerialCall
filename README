@@ -1,0 +1,4 @@
+Simple description
+Python-arduino allows you to remote control the arduino using the same function names as if you were writing an arduino sketch, from within a python script or an interactive pyhton shell.
+
+Instructions:
