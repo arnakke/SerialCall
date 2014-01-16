@@ -18,6 +18,23 @@
 #define GET_ARGS(...) GET_MACRO(__VA_ARGS__, ARGS_4, ARGS_3, ARGS_2, ARGS_1_OR_0)(__VA_ARGS__)
 
 
+/**
+ * These templates make sure to only return data when the return
+ * type is not vois.
+ */
+template <typename R>
+inline void _return_data(RetData data, SerialCall* p) {
+  /* Calculate the pointer to the actual return data.
+   * The offset calculation is based on the avr-gcc calling convention
+   * as specified in the ABI. See http://gcc.gnu.org/wiki/avr-gcc */ \
+  uint8_t* offset = (uint8_t*)&data + (sizeof(data)-sizeof(R)-sizeof(R)%2);     \
+  p->return_data(offset, sizeof(R));
+}
+
+template<>
+inline void _return_data<void>(RetData data, SerialCall* p) {}
+
+
 // This is the template code for handlers to functions with n arguments.
 // It is put in this macro so that it can be edited in one place.
 // Lines must end with a "\"
@@ -38,13 +55,7 @@ callback = (RetData (*)(__VA_ARGS__)) org_func;                  \
 RetData data = callback(GET_ARGS(__VA_ARGS__)); \
                                                                       \
 /* Return data if the callback return type is not void */ \
-if (!is_void(R)) {                                                    \
-  /* Calculate the pointer to the actual return data.
-   * The offset calculation is based on the avr-gcc calling convention
-   * as specified in the ABI. See http://gcc.gnu.org/wiki/avr-gcc */ \
-  uint8_t* offset = (uint8_t*)&data + (sizeof(data)-sizeof(R)-sizeof(R)%2);     \
-  p->return_data(offset, sizeof(R));                                  \
-}
+_return_data<R>(data, p);
 
 
 

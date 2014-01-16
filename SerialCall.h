@@ -2,7 +2,6 @@
 #define SERIALCONTROLLED_H
 
 #include "Arduino.h"
-#include "include/type_info.h"
 #include "include/handler_templates.h"
 #include "include/crc8.h"
 
@@ -81,9 +80,39 @@ class SerialCall {
     // Template function to add callbacks to the instance.
     // Will automatically create handlers for arbitrary
     // callback functions (limitations apply).
+    
+    /* The variadic template version is out for now,
+     * until arduino decides to update the gcc version
+     * shipped with the ide.
     template <typename R, typename ... Args>
     void add(R (*func) (Args ...), uint8_t id) {
       add(handle<R,Args...>, sizeof_args(func), id); 
+      org_funcs[id] = (void (*)()) func;  
+    }*/
+    
+    template <typename R>
+    void add(R (*func) (), uint8_t id) {
+      add(handle<R>, 0, id); 
+      org_funcs[id] = (void (*)()) func;  
+    }
+    template <typename R, typename A1>
+    void add(R (*func) (A1), uint8_t id) {
+      add(handle<R,A1>, sizeof(A1), id); 
+      org_funcs[id] = (void (*)()) func;  
+    }
+    template <typename R, typename A1, typename A2>
+    void add(R (*func) (A1, A2), uint8_t id) {
+      add(handle<R,A1,A2>, sizeof(A1)+sizeof(A2), id); 
+      org_funcs[id] = (void (*)()) func;  
+    }
+    template <typename R, typename A1, typename A2, typename A3>
+    void add(R (*func) (A1, A2, A3), uint8_t id) {
+      add(handle<R,A1,A2,A3>, sizeof(A1)+sizeof(A2)+sizeof(A3), id); 
+      org_funcs[id] = (void (*)()) func;  
+    }
+    template <typename R, typename A1, typename A2, typename A3, typename A4>
+    void add(R (*func) (A1, A2, A3, A4), uint8_t id) {
+      add(handle<R,A1,A2,A3,A4>, sizeof(A1)+sizeof(A2)+sizeof(A3)+sizeof(A4), id); 
       org_funcs[id] = (void (*)()) func;  
     }
     
