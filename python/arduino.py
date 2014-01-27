@@ -18,6 +18,7 @@ import serial
 import time
 import struct
 import re
+import os
 from parse_constants import *
 from crc8 import *
 
@@ -85,9 +86,15 @@ class Arduino(object):
         print "Importing constants from io header file"
         io_h = self.getDevType()
         print "Got filename from device: ", io_h
-        path = "/usr/lib/avr/include/avr/" + io_h
-        print "Importing from ", path
-        parse_h(path)            
+        path = ["/usr/lib/",
+                os.environ.get("ProgramFiles","")+"/arduino/hardware/tools/avr"]
+        for p in path:
+            f = p + "/avr/include/avr/" + io_h
+            if os.path.isfile(f):
+                print "Importing from ", f
+                parse_h(f)
+                return
+        print "Error, io header file not found"          
         
     
     def open_conn(self, port):
